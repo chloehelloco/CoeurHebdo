@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cœur Hebdo Cinéma</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #FFF0F3;
+    font-family: 'Lexend', sans-serif;
+    min-height: 100vh;
+    color: #1a1a1a;
+  }
+
+  header {
+    background: #E8294A;
+    color: white;
+    text-align: center;
+    padding: 2.5rem 1.5rem 2rem;
+  }
+
+  header h1 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  header p {
+    margin-top: 0.5rem;
+    font-size: 14px;
+    opacity: 0.85;
+    font-weight: 400;
+  }
+
+  .filters {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 1.5rem 1rem;
+    flex-wrap: wrap;
+    background: white;
+    border-bottom: 2px solid #FFD6DF;
+  }
+
+  .filter-btn {
+    font-family: 'Lexend', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    background: #FFF0F3;
+    color: #E8294A;
+    border: 2px solid #FFB3C1;
+    padding: 6px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .filter-btn:hover, .filter-btn.active {
+    background: #E8294A;
+    color: white;
+    border-color: #E8294A;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    padding: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .film-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 2px solid #FFD6DF;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .film-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(232,41,74,0.15);
+  }
+
+  .card-img-wrap {
+    position: relative;
+    aspect-ratio: 2/3;
+    background: #FFE4EA;
+    overflow: hidden;
+  }
+
+  .card-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .card-img-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #FFD6DF, #FFB3C1);
+  }
+
+  .card-img-placeholder svg {
+    width: 48px;
+    height: 48px;
+    color: #E8294A;
+    opacity: 0.5;
+  }
+
+  .genre-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: #E8294A;
+    color: white;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  .card-body {
+    padding: 14px;
+  }
+
+  .card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.3;
+    margin-bottom: 10px;
+  }
+
+  .card-duration {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 10px;
+  }
+
+  .sessions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .session-tag {
+    font-size: 12px;
+    font-weight: 600;
+    background: #FFF0F3;
+    color: #E8294A;
+    border: 1.5px solid #FFB3C1;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+
+  .modal-backdrop.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal {
+    background: white;
+    border-radius: 20px;
+    max-width: 560px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: scale(0.95);
+    transition: transform 0.25s ease;
+    border: 2px solid #FFD6DF;
+  }
+
+  .modal-backdrop.open .modal {
+    transform: scale(1);
+  }
+
+  .modal-top {
+    background: #E8294A;
+    padding: 1.5rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    position: relative;
+  }
+
+  .modal-poster {
+    width: 80px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 10px;
+    flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.3);
+  }
+
+  .modal-poster-placeholder {
+    width: 80px;
+    height: 120px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(255,255,255,0.2);
+  }
+
+  .modal-poster-placeholder svg { width: 32px; height: 32px; color: white; opacity: 0.6; }
+
+  .modal-top-meta { flex: 1; padding-top: 4px; }
+
+  .modal-top-genre {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 6px;
+  }
+
+  .modal-top-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: white;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+
+  .modal-top-duration {
+    font-size: 13px;
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 12px;
+  }
+
+  .modal-top-sessions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .modal-session-tag {
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1.5px solid rgba(255,255,255,0.3);
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Lexend', sans-serif;
+  }
+
+  .modal-close:hover { background: rgba(255,255,255,0.35); }
+
+  .modal-synopsis-section {
+    padding: 1.5rem;
+  }
+
+  .modal-synopsis-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #E8294A;
+    margin-bottom: 10px;
+  }
+
+  .modal-synopsis {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #444;
+    font-weight: 400;
+  }
+
+  footer {
+    text-align: center;
+    padding: 1.5rem;
+    font-size: 12px;
+    color: #bbb;
+    margin-top: 1rem;
+  }
+
+  @media (max-width: 500px) {
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 1rem; }
+    .modal-top { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎬 Cœur Hebdo Cinéma</h1>
+  <p>Films à l'affiche cette semaine</p>
+</header>
+
+<div class="filters">
+  <button class="filter-btn active" onclick="filterFilms('tous')">Tous</button>
+  <button class="filter-btn" onclick="filterFilms('Animation')">Animation</button>
+  <button class="filter-btn" onclick="filterFilms('Drame')">Drame</button>
+  <button class="filter-btn" onclick="filterFilms('Romance')">Romance</button>
+  <button class="filter-btn" onclick="filterFilms('Thriller')">Thriller</button>
+  <button class="filter-btn" onclick="filterFilms('Comédie')">Comédie</button>
+  <button class="filter-btn" onclick="filterFilms('Film auteur')">Film d'auteur</button>
+</div>
+
+<main class="grid" id="grid"></main>
+
+<div class="modal-backdrop" id="modal-backdrop" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-top" id="modal-top"></div>
+    <div class="modal-synopsis-section" id="modal-synopsis"></div>
+  </div>
+</div>
+
+<footer>Cœur Hebdo Cinéma · Pour modifier, ouvrez le fichier dans un éditeur de texte</footer>
+
+<script>
+/* =====================================================
+   DONNÉES — Modifiez ici pour ajouter / changer les films
+   ===================================================== */
+const FILMS = [
+  {
+    id: 'f1',
+    titre: 'Brokeback Mountain',
+    genre: 'Drame',
+    duree: '2h14',
+    seances: ['14:00', '20:30'],
+    image: 'images/brokebackmountain.png',
+    synopsis: "Trois amis inséparables — Peçou, MT et Pekka — partent passer un week-end en forêt, bien décidés à camper, pêcher… et prouver qu'ils savent survivre sans Wi-Fi. Résultat : zéro poisson, beaucoup de pluie, et une tension inattendue qui s'invite entre les tentes. Entre feux de camp ratés et confidences nocturnes, Peçou et MT commencent à se plaindre que Pekka « leur monte un peu trop dessus ». Coincés dans la nature (et dans leurs émotions), les trois garçons vont découvrir que ce week-end pourrait bien mettre leur amitié à l'épreuve… pour la transformer en quelque chose de plus grand — ou de beaucoup plus compliqué."
+  },
+  {
+    id: 'f2',
+    titre: 'Pole Express',
+    genre: 'Animation',
+    duree: '1h40',
+    seances: ['13:30', '18:00'],
+    image: 'images/poleexpress.jpg',
+    synopsis: "La veille d'un retour tant attendu, Zyzy, un garçon hésitant et peu sûr de lui, part en randonnée avec ses amis, avec la promesse de rentrer ensemble à vélo. Mais face à l'effort du trajet retour, il cède à la peur et les abandonne en secret. Sur un quai désert, un train étrange apparaît, semblant n'attendre que lui. À bord, Zyzy entame un voyage inattendu, peuplé de rencontres troublantes et de situations qui reflètent ses choix et ses regrets."
+  },
+  {
+    id: 'f3',
+    titre: 'Vacances romaines',
+    genre: 'Romance',
+    duree: '1h58',
+    seances: ['15:00', '21:00'],
+    image: 'images/vacancesromaines.png',
+    synopsis: "Larhow et Rayleigh forment un couple heureux. Pour échapper à la routine suisse, ils s'offrent un week-end en Italie, entre les paysages enchanteurs du lac de Côme et l'effervescence de Milan. Entre disputes absurdes et moments de complicité inattendus, ils redécouvrent ce qui les unit vraiment."
+  },
+  {
+    id: 'f4',
+    titre: 'La Piscine',
+    genre: 'Thriller',
+    duree: '2h00',
+    seances: ['16:30', '20:00'],
+    image: 'images/lapiscine.jpg',
+    synopsis: "Colombe a tout pour réussir : une carrière brillante, un agenda surchargé et une image de « girl boss » parfaitement maîtrisée. Mais en une semaine, tout déraille. Sans prévenir personne, elle claque tout et s'échappe direction le Cap Ferret, bien décidée à ne rien faire… ou presque. Entre lâcher-prise et nouvelles rencontres, Colombe va devoir choisir : reprendre sa vie là où elle l'a laissée… ou oser en inventer une nouvelle."
+  },
+  {
+    id: 'f5',
+    titre: 'Rio',
+    genre: 'Animation',
+    duree: '1h36',
+    seances: ['14:00', '17:30'],
+    image: 'images/rio.jpg',
+    synopsis: "Alors qu'elle assiste au concert de Theodora, Mawi rate son itinéraire vers Rio. Faute de voyage, elle se rend à un concert de bossa nova la semaine suivante. Elle espère encore, au détour d'une chanson, trouver quelqu'un avec qui danser la salsa..."
+  },
+  {
+    id: 'f6',
+    titre: 'Comment se faire larguer en 10 leçons',
+    genre: 'Comédie',
+    duree: '1h55',
+    seances: ['18:00', '21:30'],
+    image: 'images/sefairelarguer.png',
+    synopsis: "Tela, femme indépendante et farouchement libre, accepte de passer un week-end à Saint-Étienne avec des amis. Mais l'arrivée de Gros Zizi, son amant aussi imprévisible qu'envahissant, vient bouleverser tous ses plans. Après une soirée bien trop arrosée dont elle ne garde aucun souvenir, Tela découvre qu'elle a épousé Gros Zizi. Coincée dans un mariage qu'elle n'a jamais voulu, elle va tout tenter pour retrouver sa liberté."
+  },
+  {
+    id: 'f7',
+    titre: "L'auberge espagnole",
+    genre: 'Romance',
+    duree: '2h00',
+    seances: ['19:00'],
+    image: 'images/lauberge.png',
+    synopsis: "Defouk quitte le Maroc pour un week-end en Espagne avec un garçon qu'elle présente comme un simple ami. Lui, pourtant, est éperdument amoureux et profite du voyage pour tenter de la séduire : dîners, plage, verres face à de beaux paysages… tout est pensé pour créer une romance. Mais malgré ses efforts, Defouk reste distante, cherchant seulement une parenthèse de liberté sans engagement. Le temps du week-end, leurs attentes s'opposent : lui espère une histoire, elle refuse de s'attacher. Ils repartent comme ils sont venus, sauf lui, qui en ressort le cœur brisé."
+  },
+  {
+    id: 'f8',
+    titre: 'La vie est un long fleuve tranquille',
+    genre: 'Film auteur',
+    duree: '1h30',
+    seances: ['16:00'],
+    image: 'images/longfleuve.webp',
+    synopsis: "Taz, illustre fondateur de Cœur Hebdo Cinéma, a laissé derrière lui ses années de folie et de célibat. Désormais installé dans une vie de couple paisible, presque trop paisible, son quotidien s'étire sans surprise, entre routine confortable et douce monotonie. Mais lorsque sa dulcinée part deux mois en Asie, cet équilibre immobile vacille. Livré à lui-même, Taz se retrouve face à un vide inattendu. Ce départ pourrait bien réveiller en lui des désirs enfouis, bousculer ses habitudes…"
+  }
+];
+
+/* ===== RENDU ===== */
+const filmIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 7h5M17 17h5"/></svg>`;
+
+function renderCards(films) {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  if (!films.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:#bbb">Aucun film dans cette catégorie.</div>';
+    return;
+  }
+  films.forEach(film => {
+    const imgHtml = film.image
+      ? `<img src="${film.image}" alt="${film.titre}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.parentElement.innerHTML='<div class=card-img-placeholder>${filmIcon.replace(/"/g, "&quot;")}</div>'">`
+      : `<div class="card-img-placeholder">${filmIcon}</div>`;
+
+    const card = document.createElement('div');
+    card.className = 'film-card';
+    card.dataset.genre = film.genre;
+    card.onclick = () => openModal(film.id);
+    card.innerHTML = `
+      <div class="card-img-wrap">
+        ${imgHtml}
+        <span class="genre-badge">${film.genre}</span>
+      </div>
+      <div class="card-body">
+        <div class="card-title">${film.titre}</div>
+        <div class="card-duration">⏱ ${film.duree}</div>
+        <div class="sessions">${film.seances.map(s => `<span class="session-tag">${s}</span>`).join('')}</div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function filterFilms(genre) {
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent.trim() === (genre === 'tous' ? 'Tous' : genre));
+  });
+  renderCards(genre === 'tous' ? FILMS : FILMS.filter(f => f.genre === genre));
+}
+
+/* ===== MODAL ===== */
+function openModal(id) {
+  const film = FILMS.find(f => f.id === id);
+  if (!film) return;
+
+  const imgHtml = film.image
+    ? `<img class="modal-poster" src="${film.image}" alt="${film.titre}" onerror="this.outerHTML='<div class=modal-poster-placeholder>${filmIcon.replace(/"/g, "&quot;")}</div>'">`
+    : `<div class="modal-poster-placeholder">${filmIcon}</div>`;
+
+  document.getElementById('modal-top').innerHTML = `
+    ${imgHtml}
+    <div class="modal-top-meta">
+      <div class="modal-top-genre">${film.genre}</div>
+      <div class="modal-top-title">${film.titre}</div>
+      <div class="modal-top-duration">⏱ ${film.duree}</div>
+      <div class="modal-top-sessions">${film.seances.map(s => `<span class="modal-session-tag">${s}</span>`).join('')}</div>
+    </div>
+    <button class="modal-close" onclick="closeModalBtn()">✕</button>
+  `;
+
+  document.getElementById('modal-synopsis').innerHTML = `
+    <div class="modal-synopsis-label">Synopsis</div>
+    <p class="modal-synopsis">${film.synopsis}</p>
+  `;
+
+  document.getElementById('modal-backdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal-backdrop')) closeModalBtn();
+}
+function closeModalBtn() {
+  document.getElementById('modal-backdrop').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModalBtn(); });
+
+renderCards(FILMS);
+</script>
+</body>
+</html>
